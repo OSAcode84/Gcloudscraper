@@ -1,0 +1,10 @@
+lxml
+requests
+pandas
+click
+phonenumbers
+pyap
+google-cloud-storage
+google-api-core
+google-auth
+google-api-python-client
