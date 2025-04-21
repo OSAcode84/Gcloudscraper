@@ -73,6 +73,7 @@ def download_credentials(bucket_name, credentials_file_name):
     return credentials
 
 def connect_to_website(url: str):
+    # Connect to websites extracted from Google sheet
     headers = {
         "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36")
@@ -104,6 +105,7 @@ def connect_to_website(url: str):
 
 
 def parse_address_string(raw_address_str: str):
+    # Parse the address extracted from Google sheet
     if not raw_address_str:
         print(f'\t\tEMPTY ADDRESS STR passed="{raw_address_str}"')
         return {}
@@ -129,7 +131,7 @@ def parse_address_string(raw_address_str: str):
 
 
 def parse_phone_string(raw_phone_str: str) -> str:
-    
+    # Parse the phone number
     print(f'\t\tRAW PHONE STR="{raw_phone_str}"')
 
     if not raw_phone_str.strip():
@@ -237,6 +239,7 @@ def scrape_one_website(row: pd.Series) -> ScraperResultRow:
     return result
 
 def upload_to_gcs(upload_bucket, file_name, content):
+    # Upload a file to the Google cloud bucket
     try:
         storage_client = storage.Client()
         bucket = storage_client.bucket(upload_bucket)
@@ -252,6 +255,7 @@ def upload_to_gcs(upload_bucket, file_name, content):
         print(f"An unexpected error occurred: {e}")  # Handling other exceptions
 
 def send_email(email_subject, email_body, to, attachment_path):
+    # Send an email with results attached to stakeholders
     from_email = os.environ.get('FROM_EMAIL')
     password = os.getenv("EMAIL_PASSWORD")
 
@@ -262,7 +266,7 @@ def send_email(email_subject, email_body, to, attachment_path):
     msg['Subject'] = email_subject
     msg.attach(MIMEText(email_body, 'plain'))
 
-    # Attach the file
+    # Attach the results file
     attachment = open(attachment_path, "rb")
     part = MIMEBase('application', 'octet-stream')
     part.set_payload((attachment).read())
@@ -311,6 +315,7 @@ def main(spreadsheet_id, range_name, bucket_name, credentials_file_name, upload_
     send_email(email_subject, email_body, recipient_email, attachment_path)
 
 def entry_point(event, context):
+    # The main function for Google cloud trigger    
     # Extract settings from environment variables
     spreadsheet_id = os.getenv('SPREADSHEET_ID')
     range_name = os.getenv('RANGE_NAME')
@@ -324,11 +329,6 @@ def entry_point(event, context):
     # Check if all necessary variables are set
     if not all([spreadsheet_id, range_name, bucket_name, credentials_file_name, upload_bucket, recipient_email, email_subject, email_body]):
         return 'Missing one or more configuration settings in environment variables', 500
-
-    # If you're using 'data', you might need to access data like this (example for Pub/Sub):
-    #if 'data' in event:
-        #message = base64.b64decode(data['data']).decode('utf-8')
-        #print(f"Received message: {message}")    
 
     # Call main function with these settings
     main(spreadsheet_id, range_name, bucket_name, credentials_file_name, upload_bucket, recipient_email, email_subject, email_body)
